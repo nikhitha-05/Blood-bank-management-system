@@ -1,0 +1,162 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct Donor {
+    char name[50];
+    char bloodGroup[5];
+    char location[50];
+    struct Donor* next;
+} Donor;
+
+Donor* head = NULL;
+
+// Function to create a new donor node
+Donor* createDonor(char name[], char bloodGroup[], char location[]) {
+    Donor* newDonor = (Donor*)malloc(sizeof(Donor));
+    strcpy(newDonor->name, name);
+    strcpy(newDonor->bloodGroup, bloodGroup);
+    strcpy(newDonor->location, location);
+    newDonor->next = NULL;
+    return newDonor;
+}
+
+// Function to insert donor at end
+void insertDonor(char name[], char bloodGroup[], char location[]) {
+    Donor* newDonor = createDonor(name, bloodGroup, location);
+    if (head == NULL) {
+        head = newDonor;
+    } else {
+        Donor* temp = head;
+        while (temp->next != NULL)
+            temp = temp->next;
+        temp->next = newDonor;
+    }
+}
+
+// Function to display all donors
+void displayDonors() {
+    Donor* temp = head;
+    if (temp == NULL) {
+        printf("No donors available.\n");
+        return;
+    }
+    printf("\nList of Donors:\n");
+    while (temp != NULL) {
+        printf("Name: %s, Blood Group: %s, Location: %s\n", temp->name, temp->bloodGroup, temp->location);
+        temp = temp->next;
+    }
+}
+
+// Function to search donors by blood group and location
+void searchDonor(char bloodGroup[], char location[]) {
+    Donor* temp = head;
+    int found = 0;
+    printf("\nSearch Results:\n");
+    while (temp != NULL) {
+        if (strcmp(temp->bloodGroup, bloodGroup) == 0 && strcmp(temp->location, location) == 0) {
+            printf("Name: %s, Blood Group: %s, Location: %s\n", temp->name, temp->bloodGroup, temp->location);
+            found = 1;
+        }
+        temp = temp->next;
+    }
+    if (!found) {
+        printf("No matching donor found.\n");
+    }
+}
+
+// Function to load donors from file
+void loadFromFile(char filename[]) {
+    FILE* file = fopen(filename, "r");
+    if (file == NULL) {
+        printf("No previous data found.\n");
+        return;
+    }
+
+    char name[50], bloodGroup[5], location[50];
+    while (fscanf(file, "%s %s %s", name, bloodGroup, location) != EOF) {
+        insertDonor(name, bloodGroup, location);
+    }
+    fclose(file);
+}
+
+// Function to save donors to file
+void saveToFile(char filename[]) {
+    FILE* file = fopen(filename, "w");
+    if (file == NULL) {
+        printf("Error saving data.\n");
+        return;
+    }
+    Donor* temp = head;
+    while (temp != NULL) {
+        fprintf(file, "%s %s %s\n", temp->name, temp->bloodGroup, temp->location);
+        temp = temp->next;
+    }
+    fclose(file);
+}
+
+// Function to remove newline character from fgets
+void removeNewline(char str[]) {
+    str[strcspn(str, "\n")] = '\0';
+}
+
+int main() {
+    int choice;
+    char name[50], bloodGroup[5], location[50];
+    char filename[] = "donors.txt";
+
+    loadFromFile(filename);
+
+    do {
+        printf("\n--- Blood Bank Management System ---\n");
+        printf("1. Add Donor\n");
+        printf("2. Display All Donors\n");
+        printf("3. Search Donor by Blood Group and Location\n");
+        printf("4. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+        getchar(); // to clear the newline character after scanf
+
+        switch (choice) {
+            case 1:
+                printf("Enter Name: ");
+                fgets(name, sizeof(name), stdin);
+                removeNewline(name);
+
+                printf("Enter Blood Group (e.g., A+, O-): ");
+                fgets(bloodGroup, sizeof(bloodGroup), stdin);
+                removeNewline(bloodGroup);
+
+                printf("Enter Location: ");
+                fgets(location, sizeof(location), stdin);
+                removeNewline(location);
+
+                insertDonor(name, bloodGroup, location);
+                saveToFile(filename);
+                printf("Donor added successfully!\n");
+                break;
+            case 2:
+                displayDonors();
+                break;
+            case 3:
+                printf("Enter Blood Group to Search: ");
+                fgets(bloodGroup, sizeof(bloodGroup), stdin);
+                removeNewline(bloodGroup);
+
+                printf("Enter Location to Search: ");
+                fgets(location, sizeof(location), stdin);
+                removeNewline(location);
+
+                searchDonor(bloodGroup, location);
+                break;
+            case 4:
+                printf("Exiting... Saving data.\n");
+                saveToFile(filename);
+                break;
+            default:
+                printf("Invalid choice! Please try again.\n");
+        }
+    } while (choice != 4);
+
+    return 0;
+}
